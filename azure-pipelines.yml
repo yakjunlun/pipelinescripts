@@ -1,0 +1,22 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- master
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: NodeApp/pipeline-utilities
+
+jobs:
+- template: buildNode.yaml@templates  # Template reference
+  parameters:    
+    artifactFeed:
+      vstsFeedPublish: 'a0898bfa-2f90-4b3f-962d-e6bc54d6ac59/3ab2ce7f-69b3-45d0-9cc1-a6d51272f88b'
+      vstsFeedPackagePublish: 'node-app'
+      versionOption: 'minor'
+      publishedPackageVar: 'node-app'

@@ -1,0 +1,60 @@
+parameters:
+  vmImage: 'ubuntu 18.04'
+  artifactFeed:
+    vstsFeedPublish: 'a0898bfa-2f90-4b3f-962d-e6bc54d6ac59/3ab2ce7f-69b3-45d0-9cc1-a6d51272f88b'
+    vstsFeedPackagePublish: ''
+    versionOption: 'minor'
+    publishedPackageVar: ''
+
+
+jobs:
+- job: Build
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  steps:
+  
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+    
+  - task: Npm@1
+    inputs:
+      command: 'ci'
+    displayName: 'Install Node.js dependencies'
+
+  - task: Npm@1
+    inputs:
+      command: 'custom'
+      customCommand: 'run test'
+    displayName: 'Run unit tests'
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: '**/test-report.xml'
+
+  - task: Npm@1
+    inputs:
+      command: 'custom'
+      customCommand: 'run build'
+    displayName: 'Build Package'
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: '$(System.DefaultWorkingDirectory)'
+      Contents: |
+        build/*.js
+        *.json
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    
+  - task: UniversalPackages@0
+    inputs:
+      command: 'publish'
+      publishDirectory: '$(Build.ArtifactStagingDirectory)'
+      feedsToUsePublish: 'internal'
+      vstsFeedPublish: '${{parameters.artifactFeed.vstsFeedPublish}}'
+      vstsFeedPackagePublish: '${{parameters.artifactFeed.vstsFeedPackagePublish}}'
+      versionOption: '${{parameters.artifactFeed.versionOption}}'
+      publishedPackageVar: '${{parameters.artifactFeed.publishedPackageVar}}'
